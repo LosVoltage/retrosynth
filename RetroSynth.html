@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RetroSynth v2.3 // RetroSynthco</title>
+<style>
+html, body {
+  margin: 0;
+  overflow: hidden;
+  background: #000000;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  color: #e8faff;
+  user-select: none;
+}
+canvas {
+  position: absolute;
+  inset: 0;
+}
+
+/* Panels */
+.panel {
+  background: #000000;
+  border-radius: 18px;
+  border: 2px solid rgba(150, 220, 255, 0.4);
+  box-shadow:
+    0 0 18px rgba(150, 220, 255, 0.25),
+    0 0 40px rgba(150, 220, 255, 0.12),
+    0 0 4px rgba(150, 220, 255, 0.6) inset;
+  padding: 20px;
+}
+
+/* Top bar */
+#topBar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 420px;
+  z-index: 20;
+}
+#title {
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b7e7ff;
+}
+#status {
+  font-size: 12px;
+  color: #7fcaff;
+  margin-top: 4px;
+}
+
+/* Start panel */
+#startPanel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  width: 420px;
+  text-align: center;
+}
+#startTitle {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b7e7ff;
+}
+#startSub {
+  font-size: 13px;
+  margin-top: 6px;
+  color: #7fcaff;
+}
+.difficultyRow {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.difficultyBtn {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(150, 220, 255, 0.5);
+  background: #000000;
+  color: #e8faff;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 100px;
+  transition: transform 0.12s, box-shadow 0.12s;
+  box-shadow:
+    0 0 14px rgba(150, 220, 255, 0.25),
+    0 0 4px rgba(150, 220, 255, 0.6) inset;
+}
+.difficultyBtn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 22px rgba(150, 220, 255, 0.4),
+    0 0 6px rgba(150, 220, 255, 0.8) inset;
+}
+#startHint {
+  margin-top: 18px;
+  font-size: 12px;
+  color: #7fcaff;
+}
+#versionBar {
+  margin-top: 14px;
+  font-size: 11px;
+  color: #7fcaff;
+}
+
+/* Tutorial */
+#tutorialBox {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.98);
+  width: 420px;
+  text-align: center;
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.4s, transform 0.4s;
+  z-index: 18;
+  display: none;
+}
+
+/* Game over */
+#gameOverPanel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  width: 360px;
+  text-align: center;
+  display: none;
+}
+#gameOverTitle {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #b7e7ff;
+}
+#gameOverScore {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #e8faff;
+}
+#restartBtn {
+  margin-top: 18px;
+  padding: 10px 26px;
+  border-radius: 999px;
+  border: 2px solid rgba(150, 220, 255, 0.5);
+  background: #000000;
+  color: #e8faff;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow:
+    0 0 14px rgba(150, 220, 255, 0.25),
+    0 0 4px rgba(150, 220, 255, 0.6) inset;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+#restartBtn:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 22px rgba(150, 220, 255, 0.4),
+    0 0 6px rgba(150, 220, 255, 0.8) inset;
+}
+
+/* Frame */
+#frame {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  border: 3px solid rgba(150, 220, 255, 0.35);
+  border-radius: 18px;
+  margin: 10px;
+  box-shadow:
+    0 0 40px rgba(150, 220, 255, 0.25),
+    0 0 0 1px rgba(150, 220, 255, 0.15);
+  z-index: 5;
+}
+</style>
+</head>
+<body>
+
+<div id="topBar" class="panel">
+  <div id="title">RETROSYNTH</div>
+  <div id="status">STATUS: IDLE</div>
+</div>
+
+<div id="tutorialBox" class="panel"></div>
+
+<div id="frame"></div>
+<canvas id="game"></canvas>
+
+<!-- START PANEL -->
+<div id="startPanel" class="panel">
+  <div id="startTitle">RETROSYNTH</div>
+  <div id="startSub">hyper-black ice edition</div>
+
+  <div class="difficultyRow">
+    <button class="difficultyBtn" data-diff="easy">EASY</button>
+    <button class="difficultyBtn" data-diff="medium">MEDIUM</button>
+    <button class="difficultyBtn" data-diff="hard">HARD</button>
+    <button class="difficultyBtn" data-diff="ultimate">ULTIMATE</button>
+  </div>
+
+  <div id="startHint">
+    controls: A / D or ← / → to move • avoid the falling blocks
+  </div>
+
+  <div id="versionBar">
+    VERSION: <span id="versionText">2.3 — RetroSynthco</span>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameOverPanel" class="panel">
+  <div id="gameOverTitle">SESSION ENDED</div>
+  <div id="gameOverScore"></div>
+  <button id="restartBtn">RESTART</button>
+</div>
+
+<script>
+/* -----------------------------------------------------------
+   BASIC SETUP
+----------------------------------------------------------- */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+const statusEl = document.getElementById("status");
+const tutorialBox = document.getElementById("tutorialBox");
+const startPanel = document.getElementById("startPanel");
+const gameOverPanel = document.getElementById("gameOverPanel");
+const restartBtn = document.getElementById("restartBtn");
+const gameOverScoreEl = document.getElementById("gameOverScore");
+
+let difficulty = "medium";
+const DIFF = {
+  easy:     { spawn: 34, speed: 2.4, player: 8, multiplier: 1 },
+  medium:   { spawn: 26, speed: 3.4, player: 7, multiplier: 1.5 },
+  hard:     { spawn: 18, speed: 4.6, player: 7, multiplier: 2 },
+  ultimate: { spawn: 11, speed: 6.4, player: 8, multiplier: 3 }
+};
+
+const player = { x: 0, y: 0, size: 18, speed: 7, trail: [] };
+let obstacles = [];
+let particles = [];
+let score = 0;
+let running = false;
+let spawnTimer = 0;
+let moveLeft = false;
+let moveRight = false;
+let shakeFrames = 0;
+
+document.addEventListener("keydown", e => {
+  if (["ArrowLeft","a","A"].includes(e.key)) moveLeft = true;
+  if (["ArrowRight","d","D"].includes(e.key)) moveRight = true;
+});
+document.addEventListener("keyup", e => {
+  if (["ArrowLeft","a","A"].includes(e.key)) moveLeft = false;
+  if (["ArrowRight","d","D"].includes(e.key)) moveRight = false;
+});
+
+/* Difficulty buttons */
+document.querySelectorAll(".difficultyBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    difficulty = btn.dataset.diff;
+    statusEl.textContent = "STATUS: DIFFICULTY SELECTED — " + difficulty.toUpperCase();
+    startPanel.style.display = "none";
+    startTutorial();
+  });
+});
+
+function startTutorial() {
+  statusEl.textContent = "STATUS: TUTORIAL";
+  tutorialBox.style.display = "block";
+  tutorialBox.style.opacity = 1;
+  tutorialBox.style.transform = "translateX(-50%) scale(1)";
+  tutorialBox.innerHTML =
+    "WELCOME TO THE GRID<br><br>" +
+    "• Move left with A or ←<br>" +
+    "• Move right with D or →<br>" +
+    "• Avoid the glowing blocks<br><br>" +
+    "PRESS ANY MOVEMENT KEY TO BEGIN";
+
+  player.x = W / 2;
+  player.y = H - 120;
+
+  const waitForMove = setInterval(() => {
+    if (moveLeft || moveRight) {
+      clearInterval(waitForMove);
+      tutorialBox.style.opacity = 0;
+      tutorialBox.style.transform = "translateX(-50%) scale(0.98)";
+      setTimeout(() => {
+        tutorialBox.style.display = "none";
+        initRun();
+      }, 350);
+    }
+  }, 50);
+}
+
+function initRun() {
+  statusEl.textContent = "STATUS: RUNNING (" + difficulty.toUpperCase() + ")";
+  player.x = W / 2;
+  player.y = H - 120;
+  player.speed = DIFF[difficulty].player;
+  player.trail = [];
+  obstacles = [];
+  particles = [];
+  score = 0;
+  spawnTimer = DIFF[difficulty].spawn;
+  running = true;
+  shakeFrames = 0;
+  loop();
+}
+
+function spawnObstacle() {
+  const size = 20 + Math.random() * 40;
+  obstacles.push({
+    x: Math.random() * (W - size),
+    y: -size,
+    size,
+    speed: DIFF[difficulty].speed + Math.random() * (score / 250)
+  });
+}
+
+function spawnParticles(x, y, color) {
+  for (let i = 0; i < 10; i++) {
+    particles.push({
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: -Math.random() * 3,
+      life: 20 + Math.random() * 10,
+      color
+    });
+  }
+}
+
+function loop() {
+  if (!running) return;
+
+  let offsetX = 0, offsetY = 0;
+  if (shakeFrames > 0) {
+    offsetX = (Math.random() - 0.5) * 8;
+    offsetY = (Math.random() - 0.5) * 8;
+    shakeFrames--;
+  }
+
+  ctx.setTransform(1, 0, 0, 1, offsetX, offsetY);
+  ctx.clearRect(-offsetX, -offsetY, W, H);
+
+  if (moveLeft) player.x -= player.speed;
+  if (moveRight) player.x += player.speed;
+  player.x = Math.max(player.size, Math.min(W - player.size, player.x));
+  player.y = H - 120;
+
+  player.trail.push({ x: player.x, y: player.y });
+  if (player.trail.length > 20) player.trail.shift();
+
+  for (let i = 0; i < player.trail.length; i++) {
+    const t = player.trail[i];
+    const alpha = i / player.trail.length;
+    const radius = player.size * 0.7 * alpha;
+    ctx.fillStyle = `rgba(150,220,255,${alpha * 0.9})`;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.shadowBlur = 22;
+  ctx.shadowColor = "#9fdcff";
+  const grad = ctx.createLinearGradient(
+    player.x - player.size, player.y - player.size,
+    player.x + player.size, player.y + player.size
+  );
+  grad.addColorStop(0, "#ffffff");
+  grad.addColorStop(1, "#9fdcff");
+  ctx.fillStyle = grad;
+  ctx.fillRect(player.x - player.size, player.y - player.size, player.size * 2, player.size * 2);
+  ctx.shadowBlur = 0;
+
+  spawnTimer--;
+  if (spawnTimer <= 0) {
+    spawnObstacle();
+    spawnTimer = Math.max(6, DIFF[difficulty].spawn - Math.floor(score / 180));
+  }
+
+  for (let o of obstacles) {
+    o.y += o.speed;
+
+    const g2 = ctx.createLinearGradient(o.x, o.y, o.x + o.size, o.y + o.size);
+    g2.addColorStop(0, "rgba(150,220,255,0.9)");
+    g2.addColorStop(1, "rgba(100,170,255,0.9)");
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#9fdcff";
+    ctx.fillStyle = g2;
+    ctx.fillRect(o.x, o.y, o.size, o.size);
+    ctx.shadowBlur = 0;
+
+    if (
+      o.x < player.x + player.size &&
+      o.x + o.size > player.x - player.size &&
+      o.y < player.y + player.size &&
+      o.y + o.size > player.y - player.size
+    ) {
+      spawnParticles(player.x, player.y, "#9fdcff");
+      shakeFrames = 12;
+      return gameOver();
+    }
+
+    if (
+      o.y + o.size > player.y - 40 &&
+      o.y < player.y + 40 &&
+      Math.abs((o.x + o.size / 2) - player.x) < o.size
+    ) {
+      spawnParticles(o.x + o.size / 2, o.y + o.size, "#9fdcff");
+    }
+  }
+
+  obstacles = obstacles.filter(o => o.y < H + 120);
+
+  for (let p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.1;
+    p.life--;
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, p.life / 30);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  particles = particles.filter(p => p.life > 0);
+
+  score += DIFF[difficulty].multiplier;
+
+  requestAnimationFrame(loop);
+}
+
+function gameOver() {
+  running = false;
+  statusEl.textContent = "STATUS: TERMINATED";
+  gameOverScoreEl.textContent = "final score: " + Math.floor(score);
+  gameOverPanel.style.display = "block";
+}
+
+restartBtn.addEventListener("click", () => {
+  gameOverPanel.style.display = "none";
+  statusEl.textContent = "STATUS: IDLE";
+  startPanel.style.display = "block";
+});
+</script>
+</body>
+</html>
